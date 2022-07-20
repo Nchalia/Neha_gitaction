@@ -1,0 +1,49 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Java CI with Maven
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Step 1:- Compile
+      run: mvn clean install
+      
+    - name: Step 2:- Package
+      run: mvn package
+      
+    - name: Step 3:- Unit Test
+      run: mvn test
+      
+    - name: Step 4:- Listing Current directory
+      run: ls -ltrh
+    
+    - name: Step 5:- Target directory
+      run: |
+       cd target
+       ls -a
+       
+    - name: Step  Build & SonarQube analysis
+      run: |
+       mvn verify sonar:sonar -Dsonar.organization=${{ secrets.SONAR_ORG }} -Dsonar.projectKey=ndc -Dsonar.login=${{ secrets.SONAR_SECRET }} -Dsonar.sources=src/main/ -Dsonar.tests=src/test/ -Dsonar.exclusions=src/main/java/** -Dsonar.test.exclusions=src/main/java/** -Dsonar.host.url=https://sonarcloud.io/
+       sleep 60
+      env:
+       SONAR_SECRET: ${{ secrets.SONAR_SECRET }}
+       SONAR_ORG: ${{ secrets.SONAR_ORG }}
